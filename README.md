@@ -90,3 +90,5 @@ pytest
 Distributed under the MIT License. Created by [omchandra0907-jpg](https://github.com/omchandra0907-jpg).
 
 <!-- commit step: feat: implement lock-free circular audio ring buffer in NumPy -->
+
+<!-- commit step: feat: add sounddevice microphone input stream callback -->
