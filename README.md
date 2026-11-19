@@ -94,3 +94,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: add sounddevice microphone input stream callback -->
 
 <!-- commit step: feat: add WAV file streaming reader adapter for offline analysis -->
+
+<!-- commit step: feat: implement Hann windowing and real FFT (rfft) spectrum engine -->
