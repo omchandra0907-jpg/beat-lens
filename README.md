@@ -102,3 +102,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: implement exponential smoothing and gravity-decay peak-hold caps -->
 
 <!-- commit step: feat: add acoustic feature extraction (spectral centroid, bandwidth, flux) -->
+
+<!-- commit step: feat: compute 13 Mel-Frequency Cepstral Coefficients (MFCCs) -->
