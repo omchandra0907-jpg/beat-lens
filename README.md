@@ -104,3 +104,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: add acoustic feature extraction (spectral centroid, bandwidth, flux) -->
 
 <!-- commit step: feat: compute 13 Mel-Frequency Cepstral Coefficients (MFCCs) -->
+
+<!-- commit step: feat: implement RMS energy calculation and silence gating threshold -->
