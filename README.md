@@ -98,3 +98,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: implement Hann windowing and real FFT (rfft) spectrum engine -->
 
 <!-- commit step: feat: bin FFT magnitudes into 48 logarithmic frequency bands -->
+
+<!-- commit step: feat: implement exponential smoothing and gravity-decay peak-hold caps -->
