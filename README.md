@@ -112,3 +112,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: support High-Energy, Chill/Lo-Fi, Cinematic, and Upbeat classes -->
 
 <!-- commit step: feat: export trained classifier pipeline to joblib model file -->
+
+<!-- commit step: feat: architect two-speed threading (60 Hz visual render + 2 Hz ML worker) -->
