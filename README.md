@@ -106,3 +106,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: compute 13 Mel-Frequency Cepstral Coefficients (MFCCs) -->
 
 <!-- commit step: feat: implement RMS energy calculation and silence gating threshold -->
+
+<!-- commit step: feat: train scikit-learn RandomForestClassifier for mood prediction -->
