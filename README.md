@@ -110,3 +110,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: train scikit-learn RandomForestClassifier for mood prediction -->
 
 <!-- commit step: feat: support High-Energy, Chill/Lo-Fi, Cinematic, and Upbeat classes -->
+
+<!-- commit step: feat: export trained classifier pipeline to joblib model file -->
