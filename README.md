@@ -116,3 +116,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: feat: architect two-speed threading (60 Hz visual render + 2 Hz ML worker) -->
 
 <!-- commit step: test: add unit tests for 48-band frequency mapping and peak detection -->
+
+<!-- commit step: test: add unit tests for acoustic feature extraction and mood classifier -->
