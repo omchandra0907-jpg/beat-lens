@@ -118,3 +118,5 @@ Distributed under the MIT License. Created by [omchandra0907-jpg](https://github
 <!-- commit step: test: add unit tests for 48-band frequency mapping and peak detection -->
 
 <!-- commit step: test: add unit tests for acoustic feature extraction and mood classifier -->
+
+<!-- commit step: docs: write comprehensive DSP and ML architecture documentation -->
