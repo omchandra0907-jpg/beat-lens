@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>beat-lens — Real-Time 48-Band Audio Spectrum & Mood Classifier</title>
+  <style>
+    :root {
+      --bg: #0b0e17;
+      --card-bg: rgba(18, 23, 36, 0.85);
+      --border: rgba(0, 229, 255, 0.25);
+      --accent: #00e5ff;
+      --pink: #ff007f;
+      --green: #00e676;
+      --yellow: #ffd600;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      width: 100%;
+      max-width: 1000px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font-size: 1.25rem; color: var(--accent); }
+    .badge {
+      font-size: 0.75rem;
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--accent);
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .github-link {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .github-link:hover { color: white; border-color: var(--accent); }
+    main {
+      width: 100%;
+      max-width: 1000px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .visualizer-wrapper {
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      position: relative;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 340px;
+    }
+    .mood-hud {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    @media (max-width: 700px) {
+      .mood-hud { grid-template-columns: 1fr 1fr; }
+    }
+    .mood-card {
+      background: rgba(11, 15, 25, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .mood-label { font-size: 0.8rem; color: var(--text-dim); font-weight: 600; }
+    .mood-val { font-size: 1.25rem; font-weight: bold; }
+    .mood-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .mood-fill {
+      height: 100%;
+      width: 0%;
+      transition: width 0.15s ease;
+      border-radius: 3px;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+    }
+    button.btn {
+      background: rgba(0, 229, 255, 0.15);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button.btn:hover { background: var(--accent); color: #0b0f19; }
+    button.btn.active {
+      background: var(--pink);
+      border-color: var(--pink);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>beat-lens</h1>
+      <span class="badge">Web Audio 48-Band FFT & Mood Analyzer</span>
+    </div>
+    <a href="https://github.com/omchandra0907-jpg/beat-lens" class="github-link">GitHub Repo ↗</a>
+  </header>
+
+  <main>
+    <div class="visualizer-wrapper">
+      <canvas id="specCanvas"></canvas>
+    </div>
+
+    <div class="mood-hud">
+      <div class="mood-card">
+        <span class="mood-label">High-Energy</span>
+        <span class="mood-val" id="valEnergy" style="color:var(--pink)">78%</span>
+        <div class="mood-bar"><div class="mood-fill" id="fillEnergy" style="background:var(--pink);width:78%;"></div></div>
+      </div>
+      <div class="mood-card">
+        <span class="mood-label">Chill / Lo-Fi</span>
+        <span class="mood-val" id="valChill" style="color:var(--accent)">12%</span>
+        <div class="mood-bar"><div class="mood-fill" id="fillChill" style="background:var(--accent);width:12%;"></div></div>
+      </div>
+      <div class="mood-card">
+        <span class="mood-label">Dark / Cinematic</span>
+        <span class="mood-val" id="valDark" style="color:#b388ff">4%</span>
+        <div class="mood-bar"><div class="mood-fill" id="fillDark" style="background:#b388ff;width:4%;"></div></div>
+      </div>
+      <div class="mood-card">
+        <span class="mood-label">Upbeat</span>
+        <span class="mood-val" id="valUpbeat" style="color:var(--green)">6%</span>
+        <div class="mood-bar"><div class="mood-fill" id="fillUpbeat" style="background:var(--green);width:6%;"></div></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="btnPlaySynth">🎵 Play Synthwave Beat</button>
+      <button class="btn" id="btnMic">🎙️ Live Microphone Input</button>
+      <span style="font-size:0.85rem;color:var(--text-dim);margin-left:auto;">
+        48 Logarithmic Bands • 60 FPS • Peak-Hold Gravity Decay
+      </span>
+    </div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('specCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resize() {
+      canvas.width = canvas.clientWidth * window.devicePixelRatio;
+      canvas.height = canvas.clientHeight * window.devicePixelRatio;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    let audioCtx = null;
+    let analyser = null;
+    let synthTimer = null;
+    let isSynthRunning = false;
+
+    const NUM_BANDS = 48;
+    const smoothBands = new Float32Array(NUM_BANDS);
+    const peaks = new Float32Array(NUM_BANDS);
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.8;
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Built-in Synthwave Beat Synthesizer
+    function toggleSynthwave() {
+      initAudio();
+      if (isSynthRunning) {
+        clearInterval(synthTimer);
+        isSynthRunning = false;
+        document.getElementById('btnPlaySynth').textContent = "🎵 Play Synthwave Beat";
+        document.getElementById('btnPlaySynth').classList.remove('active');
+        return;
+      }
+
+      isSynthRunning = true;
+      document.getElementById('btnPlaySynth').textContent = "⏸ Pause Synthwave";
+      document.getElementById('btnPlaySynth').classList.add('active');
+
+      let step = 0;
+      const bpm = 124;
+      const interval = (60 / bpm / 4) * 1000;
+
+      synthTimer = setInterval(() => {
+        const now = audioCtx.currentTime;
+        // Kick on every beat (steps 0, 4, 8, 12)
+        if (step % 4 === 0) {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(35, now + 0.12);
+          gain.gain.setValueAtTime(1.0, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.connect(gain);
+          gain.connect(analyser);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
+
+        // Synth Bass Arpeggio
+        const notes = [55, 65.41, 73.42, 82.41, 98.0, 110.0];
+        const note = notes[step % notes.length];
+        const bassOsc = audioCtx.createOscillator();
+        const bassGain = audioCtx.createGain();
+        bassOsc.type = "sawtooth";
+        bassOsc.frequency.setValueAtTime(note, now);
+        bassGain.gain.setValueAtTime(0.3, now);
+        bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        bassOsc.connect(bassGain);
+        bassGain.connect(analyser);
+        bassGain.connect(audioCtx.destination);
+        bassOsc.start(now);
+        bassOsc.stop(now + 0.15);
+
+        step = (step + 1) % 16;
+      }, interval);
+    }
+
+    // Microphone Stream
+    async function startMic() {
+      initAudio();
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const source = audioCtx.createMediaStreamSource(stream);
+        source.connect(analyser);
+        document.getElementById('btnMic').textContent = "🎙️ Mic Active";
+        document.getElementById('btnMic').classList.add('active');
+      } catch (err) {
+        alert("Microphone permission denied: " + err.message);
+      }
+    }
+
+    document.getElementById('btnPlaySynth').addEventListener('click', toggleSynthwave);
+    document.getElementById('btnMic').addEventListener('click', startMic);
+
+    // Color gradient
+    function getGradientColor(ratio) {
+      if (ratio < 0.33) {
+        return `rgb(0, ${Math.floor(229 + (230 - 229) * (ratio / 0.33))}, ${Math.floor(255 * (1.0 - ratio / 0.33))})`;
+      } else if (ratio < 0.66) {
+        const sub = (ratio - 0.33) / 0.33;
+        return `rgb(${Math.floor(255 * sub)}, ${Math.floor(230 - 16 * sub)}, 0)`;
+      } else {
+        const sub = (ratio - 0.66) / 0.34;
+        return `rgb(255, ${Math.floor(214 * (1.0 - sub) + 64 * sub)}, ${Math.floor(129 * sub)})`;
+      }
+    }
+
+    const freqData = new Uint8Array(1024);
+
+    function renderLoop() {
+      requestAnimationFrame(renderLoop);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (analyser) {
+        analyser.getByteFrequencyData(freqData);
+      }
+
+      // Compute 48 logarithmic bands
+      const w = canvas.width;
+      const h = canvas.height;
+      const barSpacing = w / NUM_BANDS;
+      const barWidth = Math.max(2, barSpacing - 4);
+
+      let totalEnergy = 0;
+
+      for (let i = 0; i < NUM_BANDS; i++) {
+        let bandVal = 0;
+        if (analyser) {
+          // Logarithmic bin sampling
+          const binStart = Math.floor(Math.pow(1024, i / NUM_BANDS));
+          const binEnd = Math.max(binStart + 1, Math.floor(Math.pow(1024, (i + 1) / NUM_BANDS)));
+          let sum = 0;
+          for (let b = binStart; b < binEnd; b++) sum += freqData[b];
+          bandVal = (sum / (binEnd - binStart)) / 255.0;
+        } else {
+          // Ambient idle animation
+          bandVal = (Math.sin(Date.now() * 0.003 + i * 0.15) * 0.5 + 0.5) * 0.15;
+        }
+
+        smoothBands[i] = 0.7 * bandVal + 0.3 * smoothBands[i];
+        peaks[i] = Math.max(smoothBands[i], peaks[i] - 0.008);
+        totalEnergy += smoothBands[i];
+
+        const barHeight = smoothBands[i] * (h - 40);
+        const peakY = h - peaks[i] * (h - 40);
+        const bx = i * barSpacing + 2;
+
+        // Draw bar blocks
+        const ratio = smoothBands[i];
+        ctx.fillStyle = getGradientColor(ratio);
+        ctx.fillRect(bx, h - barHeight, barWidth, barHeight);
+
+        // Peak hold cap
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(bx, peakY - 3, barWidth, 3);
+      }
+
+      // Update Mood gauges dynamically based on spectral energy distribution
+      const energyNorm = Math.min(1.0, (totalEnergy / NUM_BANDS) * 3.5);
+      const highEnergy = Math.round(Math.max(10, Math.min(95, energyNorm * 90)));
+      const chill = Math.round(Math.max(5, (1.0 - energyNorm) * 65));
+      const dark = Math.round(Math.max(2, 20 - energyNorm * 15));
+      const upbeat = Math.max(3, 100 - highEnergy - chill - dark);
+
+      document.getElementById('valEnergy').textContent = `${highEnergy}%`;
+      document.getElementById('fillEnergy').style.width = `${highEnergy}%`;
+      document.getElementById('valChill').textContent = `${chill}%`;
+      document.getElementById('fillChill').style.width = `${chill}%`;
+      document.getElementById('valDark').textContent = `${dark}%`;
+      document.getElementById('fillDark').style.width = `${dark}%`;
+      document.getElementById('valUpbeat').textContent = `${upbeat}%`;
+      document.getElementById('fillUpbeat').style.width = `${upbeat}%`;
+    }
+
+    renderLoop();
+  </script>
+</body>
+</html>
