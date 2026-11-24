@@ -1,6 +1,6 @@
 # beat-lens
 
-> Real-time 48-band logarithmic audio frequency visualizer and acoustic mood classifier in Python.
+> High-throughput real-time 48-band audio frequency visualizer and acoustic spectral classifier in Python.
 
 ![beat-lens Showcase](assets/demo.gif)
 
@@ -8,83 +8,95 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://www.python.org/)
 
-> **🌐 Live Interactive Web Demo:** [https://omchandra0907-jpg.github.io/beat-lens/](https://omchandra0907-jpg.github.io/beat-lens/)
-
-[![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Web_Audio_Visualizer_&_Synth-00E5FF?style=for-the-badge&labelColor=0d1117)](https://omchandra0907-jpg.github.io/beat-lens/)
+> **Live Interactive Web Demo:** [https://omchandra0907-jpg.github.io/beat-lens/](https://omchandra0907-jpg.github.io/beat-lens/)
 
 ---
 
-## Architectural Highlights
+## Architectural Overview
 
-- **Lock-Free Audio Ring Buffer**: High-throughput circular NumPy buffer (`44100 * 3` samples) allowing continuous asynchronous audio ingestion without blocking the rendering or inference threads.
-- **Logarithmic 48-Band Frequency Analyzer**:
-  - Computes 2048-point Real FFT (`rfft`) modulated by a Hann window (`np.hanning`) to suppress spectral leakage.
-  - Bins magnitudes across 48 logarithmically spaced frequency bands ($20\text{ Hz}$ to $16\text{ kHz}$) mirroring human auditory cochlear perception.
-  - Features exponential smoothing and gravity-decay peak-hold caps for responsive, punchy terminal bar animations.
-- **Two-Speed Feature & Inference Architecture**:
-  - **60 Hz Main Thread**: Sub-millisecond FFT bar rendering with 24-bit TrueColor ANSI escape gradients.
-  - **2 Hz ML Background Worker**: Computes acoustic descriptors (spectral centroid, bandwidth, RMS energy, zero-crossing rate, spectral flux, and 13 MFCCs) and feeds an optimized scikit-learn `Pipeline` (`StandardScaler` + `RandomForestClassifier`).
-- **Predicted Mood Classes**:
-  - `High-Energy` (heavy bass transients, fast high-hats, high spectral flux)
-  - `Chill / Lo-Fi` (warm low-pass filter, soft vinyl harmonics, low flux)
-  - `Dark / Cinematic` (sub-bass drone, minor dissonance)
-  - `Upbeat` (bright major chords, crisp transients)
+`beat-lens` is a dual-rate acoustic signal processing pipeline built for sub-millisecond audio frequency decomposition and spectral classification. It combines a continuous circular ring buffer with real FFT frequency analysis and high-dimensional acoustic feature extraction.
+
+### Core Data Structures & Engine Design
+
+- **Lock-Free Circular Ring Buffer (`AudioRingBuffer`)**:
+  - Implements a contiguous NumPy ring buffer (`44100 * 3` samples) with atomic read/write head tracking.
+  - Supports asynchronous ingestion from live low-latency microphone streams (`sounddevice`) or chunked audio file feeds (`wave`) without thread blocking or memory reallocation in the hot path.
+
+- **Logarithmic 48-Band Frequency Analyzer (`SpectrumAnalyzer`)**:
+  - **Windowing:** Applies a 2048-sample Hann window (`w[n] = 0.5 * (1 - cos(2pi * n / N))`) to suppress spectral leakage across slice boundaries.
+  - **rFFT Decomposition:** Computes one-sided Real Fast Fourier Transform magnitudes over Nyquist space ($0$ to $22.05\text{ kHz}$).
+  - **Cochlear Log Binning:** Maps FFT bins into 48 logarithmically spaced frequency bands from $20\text{ Hz}$ to $16\text{ kHz}$, accurately matching human auditory perception.
+  - **Ballistics Engine:** Incorporates exponential temporal smoothing with asymmetric attack/release coefficients and gravity-decay peak-hold caps.
+
+- **Multi-Rate Acoustic Feature Extraction**:
+  - **Spectral Descriptors:** Real-time computation of Spectral Centroid (brightness), Spectral Spread (bandwidth), Spectral Flux (transient detection), and Zero-Crossing Rate (percussiveness).
+  - **Cepstral Analysis:** Computes 13 Mel-Frequency Cepstral Coefficients (MFCCs) via discrete cosine transform over triangular Mel-scale filterbanks.
+  - **Two-Speed Threading:** The visual rendering loop executes at 60 Hz on the main thread while acoustic descriptors feed classification routines asynchronously at 2 Hz.
+
+- **Acoustic Profile Categories**:
+  - `High-Energy`: High spectral flux, intense sub-bass transients, elevated centroid.
+  - `Chill / Lo-Fi`: Warm low-pass rolloff, restrained spectral flux, compressed dynamic range.
+  - `Dark / Cinematic`: Sustained low-frequency resonant drones, low centroid, wide harmonic spread.
+  - `Upbeat`: Vibrant upper-mid presence, crisp transients, balanced dynamic profile.
 
 ---
 
 ## Quickstart
 
 ### Installation
+
 ```bash
 git clone https://github.com/omchandra0907-jpg/beat-lens.git
 cd beat-lens
 pip install -e .
 ```
 
-### Zero-Setup Live Showcase
-Run the real-time visualizer immediately with the bundled royalty-free synthwave audio loop:
+### Zero-Setup Demo Mode
+
+Launch the ANSI TrueColor terminal visualizer immediately with the bundled synthwave audio loop:
+
 ```bash
 beat-lens --demo
 ```
 
-### Visualize Your Own Audio File
+### Analyze Live Microphone Input
+
 ```bash
-beat-lens path/to/track.wav
+beat-lens
 ```
 
-### Retrain Mood Classification Pipeline
+### Analyze a Local Audio File
+
 ```bash
-beat-lens --train
+beat-lens path/to/recording.wav
 ```
 
 ---
 
-## Model Performance & Evaluation
+## Verification & Testing
 
-```
-=== Model Evaluation Report ===
-                   precision    recall  f1-score   support
+Run the full pytest test suite verifying FFT peak detection accuracy, ring buffer boundary wrapping, and acoustic descriptor extraction:
 
-      High-Energy       1.00      1.00      1.00        20
-    Chill / Lo-Fi       1.00      1.00      1.00        20
- Dark / Cinematic       1.00      1.00      1.00        20
-           Upbeat       1.00      1.00      1.00        20
-
-         accuracy                           1.00        80
-        macro avg       1.00      1.00      1.00        80
-     weighted avg       1.00      1.00      1.00        80
+```bash
+pytest tests/
 ```
 
 ---
 
-## Running Tests
+## Technical Specifications
 
-```bash
-pytest
-```
+| Parameter | Specification |
+|---|---|
+| **Sampling Rate** | 44,100 Hz (16-bit PCM standard) |
+| **FFT Window Size** | 2048 samples (~46.4 ms temporal resolution) |
+| **Window Function** | Hann (`numpy.hanning`) |
+| **Frequency Bands** | 48 logarithmic bands ($20\text{ Hz}$ – $16\text{ kHz}$) |
+| **Buffer Architecture** | 3-second continuous circular NumPy ring buffer |
+| **Terminal Output** | 24-bit TrueColor ANSI escape sequences with peak-hold physics |
+| **Web Output** | Web Audio API `AnalyserNode` + Canvas 2D + Web Audio Synth |
 
 ---
 
 ## License
 
-Distributed under the MIT License. Created by [omchandra0907-jpg](https://github.com/omchandra0907-jpg).
+Distributed under the MIT License. Developed by [Om Chandra](https://github.com/omchandra0907-jpg).
