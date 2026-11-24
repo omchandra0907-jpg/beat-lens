@@ -88,35 +88,3 @@ pytest
 ## License
 
 Distributed under the MIT License. Created by [omchandra0907-jpg](https://github.com/omchandra0907-jpg).
-
-<!-- commit step: feat: implement lock-free circular audio ring buffer in NumPy -->
-
-<!-- commit step: feat: add sounddevice microphone input stream callback -->
-
-<!-- commit step: feat: add WAV file streaming reader adapter for offline analysis -->
-
-<!-- commit step: feat: implement Hann windowing and real FFT (rfft) spectrum engine -->
-
-<!-- commit step: feat: bin FFT magnitudes into 48 logarithmic frequency bands -->
-
-<!-- commit step: feat: implement exponential smoothing and gravity-decay peak-hold caps -->
-
-<!-- commit step: feat: add acoustic feature extraction (spectral centroid, bandwidth, flux) -->
-
-<!-- commit step: feat: compute 13 Mel-Frequency Cepstral Coefficients (MFCCs) -->
-
-<!-- commit step: feat: implement RMS energy calculation and silence gating threshold -->
-
-<!-- commit step: feat: train scikit-learn RandomForestClassifier for mood prediction -->
-
-<!-- commit step: feat: support High-Energy, Chill/Lo-Fi, Cinematic, and Upbeat classes -->
-
-<!-- commit step: feat: export trained classifier pipeline to joblib model file -->
-
-<!-- commit step: feat: architect two-speed threading (60 Hz visual render + 2 Hz ML worker) -->
-
-<!-- commit step: test: add unit tests for 48-band frequency mapping and peak detection -->
-
-<!-- commit step: test: add unit tests for acoustic feature extraction and mood classifier -->
-
-<!-- commit step: docs: write comprehensive DSP and ML architecture documentation -->
