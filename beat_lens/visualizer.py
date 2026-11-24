@@ -95,5 +95,3 @@ class TerminalVisualizer:
 
         sys.stdout.write("".join(lines))
         sys.stdout.flush()
-
-# Terminal mood confidence display HUD
